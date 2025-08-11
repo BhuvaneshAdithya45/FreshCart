@@ -150,7 +150,7 @@ export const placeOrderStripe = async (req, res) => {
     const session = await stripeInstance.checkout.sessions.create({
       line_items,
       mode: "payment",
-      success_url: `${origin}/loader?next=my-orders`,
+      success_url: `${origin}/my-orders?payment=success`, // ✅ Updated redirect
       cancel_url: `${origin}/cart`,
       metadata: {
         orderId: order._id.toString(),
@@ -205,7 +205,7 @@ export const updateOrderStatus = async (req, res) => {
 // ==========================
 export const getUserOrders = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user?._id; // ✅ Use authUser middleware's ID
     const orders = await Order.find({
       userId,
       $or: [{ paymentType: "COD" }, { isPaid: true }],
@@ -238,7 +238,7 @@ export const getAllOrders = async (req, res) => {
 };
 
 // ==========================
-// Stripe Webhooks: /stripe
+// Stripe Webhooks: /stripe/webhook
 // ==========================
 export const stripeWebhooks = async (request, response) => {
   const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);

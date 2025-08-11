@@ -1,23 +1,25 @@
 import express from 'express';
 import authUser from '../middlewares/authUser.js';
+import authSeller from '../middlewares/authSeller.js';
 import {
   getAllOrders,
   getUserOrders,
   placeOrderCOD,
   placeOrderStripe,
-  updateOrderStatus
+  updateOrderStatus,
+  stripeWebhooks
 } from '../controllers/orderController.js';
-import authSeller from '../middlewares/authSeller.js';
+import bodyParser from 'body-parser';
 
 const orderRouter = express.Router();
 
-// User order routes
+// Stripe webhook must use raw body
+orderRouter.post('/stripe/webhook', bodyParser.raw({ type: 'application/json' }), stripeWebhooks);
+
 orderRouter.post('/cod', authUser, placeOrderCOD);
 orderRouter.post('/stripe', authUser, placeOrderStripe);
 orderRouter.get('/user', authUser, getUserOrders);
-
-// Seller order routes
 orderRouter.get('/seller', authSeller, getAllOrders);
-orderRouter.patch('/:id/status', authSeller, updateOrderStatus);  // NEW: Update order status (Shipped/Delivered)
+orderRouter.patch('/:id/status', authSeller, updateOrderStatus);
 
 export default orderRouter;
