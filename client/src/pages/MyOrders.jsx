@@ -8,14 +8,8 @@ const MyOrders = () => {
     const fetchMyOrders = async () => {
         if (!user) return;
         try {
-            // Ensure auth header is set
-            const token = localStorage.getItem('token');
-            if (token) {
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            }
-
+            // Use GET because backend route is GET /api/order/user
             const { data } = await axios.get('/api/order/user');
-
             if (data.success) {
                 setMyOrders(data.orders);
             } else {
