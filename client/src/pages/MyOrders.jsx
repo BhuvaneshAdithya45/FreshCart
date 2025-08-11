@@ -6,10 +6,16 @@ const MyOrders = () => {
     const { currency, axios, user } = useAppContext();
 
     const fetchMyOrders = async () => {
-        if (!user?._id) return;
+        if (!user) return;
         try {
-            // Use POST so we can send userId
-            const { data } = await axios.post('/api/order/user', { userId: user._id });
+            // Ensure auth header is set
+            const token = localStorage.getItem('token');
+            if (token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            }
+
+            const { data } = await axios.get('/api/order/user');
+
             if (data.success) {
                 setMyOrders(data.orders);
             } else {
