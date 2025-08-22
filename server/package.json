@@ -1,15 +1,16 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "FreshCart backend (Express + Mongo + Stripe + Socket.IO)",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=18 <23"
+  },
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "dev": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",

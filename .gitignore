@@ -1,6 +1,12 @@
 # Node modules
 client/node_modules/
 server/node_modules/
+# Optional: local Stripe CLI artifacts
+.stripe/
+
+client/.env.local
+server/.env.local
+
 
 # Logs
 logs
