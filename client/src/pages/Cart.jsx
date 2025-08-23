@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
-import socket from "../utils/socket"; // ✅ Reuse socket instance
+import socket from "../utils/socket";
 
 const Cart = () => {
   const {
@@ -24,61 +24,57 @@ const Cart = () => {
   const [showAddress, setShowAddress] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentOption, setPaymentOption] = useState("COD");
+  const [submitting, setSubmitting] = useState(false);
 
-  // ========================
-  // Fetch Cart Products
-  // ========================
+  /* ------------------------------- build cart ------------------------------- */
   const getCart = () => {
-    let tempArray = [];
-    for (const key in cartItems) {
-      const product = products.find((item) => item._id === key);
-      if (product) {
-        tempArray.push({ ...product, quantity: cartItems[key] });
+    const arr = [];
+    for (const id in cartItems) {
+      const p = products.find((it) => it._id === id);
+      if (p) {
+        arr.push({ ...p, quantity: cartItems[id] });
       } else {
-        console.warn(`Product with ID ${key} not found. Removing from cart.`);
-        removeFromCart(key);
+        // If a product no longer exists in the catalog, remove it
+        console.warn(`Product ${id} not found. Removing from cart.`);
+        removeFromCart(id);
       }
     }
-    setCartArray(tempArray);
+    setCartArray(arr);
   };
 
-  // ========================
-  // Fetch User Address
-  // ========================
+  /* ------------------------------- addresses -------------------------------- */
   const getUserAddress = async () => {
     try {
       const { data } = await axios.get("/api/address/get");
       if (data.success) {
         setAddresses(data.addresses);
-        if (data.addresses.length > 0) {
-          setSelectedAddress(data.addresses[0]);
-        }
+        if (data.addresses.length > 0) setSelectedAddress(data.addresses[0]);
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Failed to fetch addresses");
       }
-    } catch (error) {
-      toast.error(error.message);
+    } catch (e) {
+      toast.error(e.message || "Failed to fetch addresses");
     }
   };
 
-  // ========================
-  // Place Order
-  // ========================
+  /* ------------------------------ place order ------------------------------- */
   const placeOrder = async () => {
     try {
-      if (!selectedAddress) return toast.error("Please select an address");
+      if (!user?._id) return toast.error("Please login first.");
+      if (!selectedAddress) return toast.error("Please select an address.");
+      if (cartArray.length === 0) return toast.error("Your cart is empty.");
 
-      // Stock validation before placing order
+      // Pre-check live stock
       for (const item of cartArray) {
-        if (item.stock !== undefined && item.stock < item.quantity) {
+        if (typeof item.stock === "number" && item.stock < item.quantity) {
           return toast.error(`Only ${item.stock} left in stock for ${item.name}`);
         }
       }
 
-      const orderItems = cartArray.map((item) => ({
-        product: item._id,
-        quantity: item.quantity,
-        seller: item.seller,
+      const orderItems = cartArray.map((it) => ({
+        product: it._id,
+        quantity: it.quantity,
+        seller: it.seller,
       }));
 
       const payload = {
@@ -87,57 +83,91 @@ const Cart = () => {
         address: selectedAddress._id,
       };
 
+      setSubmitting(true);
+
       if (paymentOption === "COD") {
         const { data } = await axios.post("/api/order/cod", payload);
         if (data.success) {
-          toast.success(data.message);
+          toast.success(data.message || "Order placed");
           setCartItems({});
           navigate("/my-orders");
         } else {
-          toast.error(data.message);
+          toast.error(data.message || "Failed to place order");
         }
       } else {
         const { data } = await axios.post("/api/order/stripe", payload);
-        if (data.success) {
-          window.location.replace(data.url);
+        if (data.success && data.url) {
+          // Stripe hosted checkout
+          window.location.assign(data.url);
         } else {
-          toast.error(data.message);
+          toast.error(data.message || "Could not start checkout");
         }
       }
-    } catch (error) {
-      toast.error(error.message);
+    } catch (e) {
+      toast.error(e.message || "Failed to place order");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // ========================
-  // Socket: Real-time Stock Updates
-  // ========================
+  /* ------------------------ Stripe success fallback ------------------------- */
+  // If we ever land on this page with ?session_id=... (e.g., user came back),
+  // confirm on the server (idempotent), clear cart, and go to My Orders.
   useEffect(() => {
-    socket.on("stockUpdate", ({ productId, stock }) => {
-      setCartArray((prev) =>
-        prev.map((item) =>
-          item._id === productId ? { ...item, stock } : item
-        )
-      );
-    });
+    const url = new URL(window.location.href);
+    const sessionId = url.searchParams.get("session_id");
+    if (!sessionId) return;
 
-    return () => {
-      socket.off("stockUpdate");
-    };
+    (async () => {
+      try {
+        const { data } = await axios.get(`/api/order/stripe/confirm`, {
+          params: { session_id: sessionId },
+        });
+        if (data?.success) {
+          setCartItems({});
+          toast.success("Payment confirmed");
+          // Clean the URL and go to orders
+          url.searchParams.delete("session_id");
+          window.history.replaceState({}, "", url.toString());
+          navigate("/my-orders");
+        }
+      } catch (e) {
+        // Non-blocking: user will still see their orders page status
+        console.warn("Stripe confirm failed:", e?.message || e);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* -------------------------- realtime stock updates ------------------------ */
+  useEffect(() => {
+    const handler = ({ productId, stock }) => {
+      setCartArray((prev) =>
+        prev.map((it) => (it._id === productId ? { ...it, stock } : it))
+      );
+    };
+    socket.on("stockUpdate", handler);
+    return () => socket.off("stockUpdate", handler);
+  }, []);
+
+  /* ------------------------------- effects ---------------------------------- */
   useEffect(() => {
     if (products.length > 0 && cartItems) getCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, cartItems]);
 
   useEffect(() => {
     if (user) getUserAddress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // ========================
-  // Empty Cart Fallback
-  // ========================
-  if (!cartArray.length) {
+  /* ---------------------------- derived totals ------------------------------ */
+  const subtotal = useMemo(() => getCartAmount(), [getCartAmount]);
+  const tax = useMemo(() => Math.round((subtotal * 2) / 100 * 100) / 100, [subtotal]);
+  const grandTotal = useMemo(() => subtotal + tax, [subtotal, tax]);
+
+  /* --------------------------- empty cart screen ---------------------------- */
+  if (cartArray.length === 0) {
     return (
       <div className="mt-16 text-center">
         <h1 className="text-2xl font-medium">Your Cart is Empty</h1>
@@ -153,7 +183,7 @@ const Cart = () => {
 
   return (
     <div className="flex flex-col md:flex-row mt-16">
-      {/* Cart Items Section */}
+      {/* Cart Items */}
       <div className="flex-1 max-w-4xl">
         <h1 className="text-3xl font-medium mb-6">
           Shopping Cart{" "}
@@ -166,79 +196,67 @@ const Cart = () => {
           <p className="text-center">Action</p>
         </div>
 
-        {cartArray.map((product, index) => (
-          <div
-            key={index}
-            className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3"
-          >
-            <div className="flex items-center md:gap-6 gap-3">
-              <div
-                onClick={() => {
-                  navigate(
-                    `/products/${product.category.toLowerCase()}/${product._id}`
-                  );
-                  scrollTo(0, 0);
-                }}
-                className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded"
-              >
-                <img
-                  className="max-w-full h-full object-cover"
-                  src={product.image[0]}
-                  alt={product.name}
-                />
-              </div>
-              <div>
-                <p className="hidden md:block font-semibold">{product.name}</p>
-                <div className="font-normal text-gray-500/70">
-                  <p>
-                    Weight: <span>{product.weight || "N/A"}</span>
-                  </p>
-                  <div className="flex items-center">
-                    <p>Qty:</p>
-                    <select
-                      onChange={(e) =>
-                        updateCartItem(product._id, Number(e.target.value))
-                      }
-                      value={cartItems[product._id]}
-                      className="outline-none"
-                    >
-                      {Array(
-                        cartItems[product._id] > 9 ? cartItems[product._id] : 9
-                      )
-                        .fill("")
-                        .map((_, idx) => (
-                          <option key={idx} value={idx + 1}>
-                            {idx + 1}
+        {cartArray.map((p) => {
+          // limit quantity choices by current stock (if known)
+          const maxQty = Math.max(1, Math.min(9, typeof p.stock === "number" ? Math.max(p.stock, 1) : 9));
+          const options = Array.from({ length: Math.max(maxQty, cartItems[p._id] || 1) }, (_, i) => i + 1);
+
+          return (
+            <div
+              key={p._id}
+              className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3"
+            >
+              <div className="flex items-center md:gap-6 gap-3">
+                <div
+                  onClick={() => {
+                    navigate(`/products/${p.category.toLowerCase()}/${p._id}`);
+                    scrollTo(0, 0);
+                  }}
+                  className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded"
+                >
+                  <img className="max-w-full h-full object-cover" src={p.image[0]} alt={p.name} />
+                </div>
+                <div>
+                  <p className="hidden md:block font-semibold">{p.name}</p>
+                  <div className="font-normal text-gray-500/70">
+                    <p>
+                      Weight: <span>{p.weight || "N/A"}</span>
+                    </p>
+                    <div className="flex items-center">
+                      <p>Qty:&nbsp;</p>
+                      <select
+                        onChange={(e) => updateCartItem(p._id, Number(e.target.value))}
+                        value={cartItems[p._id]}
+                        className="outline-none"
+                      >
+                        {options.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
                           </option>
                         ))}
-                    </select>
-                  </div>
-                  {/* Stock warning */}
-                  {product.stock !== undefined &&
-                    product.stock < product.quantity && (
+                      </select>
+                    </div>
+
+                    {typeof p.stock === "number" && p.stock < p.quantity && (
                       <p className="text-red-500 text-xs mt-1">
-                        Only {product.stock} items left in stock!
+                        Only {p.stock} item{p.stock === 1 ? "" : "s"} left in stock!
                       </p>
                     )}
+                  </div>
                 </div>
               </div>
+
+              <p className="text-center">
+                {currency}
+                {p.offerPrice * p.quantity}
+              </p>
+
+              <button onClick={() => removeFromCart(p._id)} className="cursor-pointer mx-auto">
+                <img src={assets.remove_icon} alt="remove" className="inline-block w-6 h-6" />
+              </button>
             </div>
-            <p className="text-center">
-              {currency}
-              {product.offerPrice * product.quantity}
-            </p>
-            <button
-              onClick={() => removeFromCart(product._id)}
-              className="cursor-pointer mx-auto"
-            >
-              <img
-                src={assets.remove_icon}
-                alt="remove"
-                className="inline-block w-6 h-6"
-              />
-            </button>
-          </div>
-        ))}
+          );
+        })}
 
         <button
           onClick={() => {
@@ -271,24 +289,24 @@ const Cart = () => {
                 : "No address found"}
             </p>
             <button
-              onClick={() => setShowAddress(!showAddress)}
+              onClick={() => setShowAddress((s) => !s)}
               className="text-primary hover:underline cursor-pointer"
             >
               Change
             </button>
+
             {showAddress && (
-              <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
-                {addresses.map((address, idx) => (
+              <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full z-10">
+                {addresses.map((addr) => (
                   <p
-                    key={idx}
+                    key={addr._id}
                     onClick={() => {
-                      setSelectedAddress(address);
+                      setSelectedAddress(addr);
                       setShowAddress(false);
                     }}
                     className="text-gray-500 p-2 hover:bg-gray-100 cursor-pointer"
                   >
-                    {address.street}, {address.city}, {address.state},{" "}
-                    {address.country}
+                    {addr.street}, {addr.city}, {addr.state}, {addr.country}
                   </p>
                 ))}
                 <p
@@ -305,6 +323,7 @@ const Cart = () => {
           <p className="text-sm font-medium uppercase mt-6">Payment Method</p>
           <select
             onChange={(e) => setPaymentOption(e.target.value)}
+            value={paymentOption}
             className="w-full border border-gray-300 bg-white px-3 py-2 mt-2 outline-none"
           >
             <option value="COD">Cash On Delivery</option>
@@ -314,11 +333,14 @@ const Cart = () => {
 
         <hr className="border-gray-300" />
 
-        {/* Price Details */}
+        {/* Totals */}
         <div className="text-gray-500 mt-4 space-y-2">
           <p className="flex justify-between">
             <span>Price</span>
-            <span>{currency}{getCartAmount()}</span>
+            <span>
+              {currency}
+              {subtotal}
+            </span>
           </p>
           <p className="flex justify-between">
             <span>Shipping Fee</span>
@@ -326,21 +348,30 @@ const Cart = () => {
           </p>
           <p className="flex justify-between">
             <span>Tax (2%)</span>
-            <span>{currency}{(getCartAmount() * 2) / 100}</span>
+            <span>
+              {currency}
+              {tax}
+            </span>
           </p>
           <p className="flex justify-between text-lg font-medium mt-3">
             <span>Total Amount:</span>
             <span>
-              {currency}{getCartAmount() + (getCartAmount() * 2) / 100}
+              {currency}
+              {grandTotal}
             </span>
           </p>
         </div>
 
         <button
           onClick={placeOrder}
-          className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition"
+          disabled={submitting || !user}
+          className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {paymentOption === "COD" ? "Place Order" : "Proceed to Checkout"}
+          {submitting
+            ? "Processing..."
+            : paymentOption === "COD"
+            ? "Place Order"
+            : "Proceed to Checkout"}
         </button>
       </div>
     </div>

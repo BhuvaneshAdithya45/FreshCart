@@ -1,24 +1,53 @@
 import mongoose from "mongoose";
 
+const orderItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+    quantity: { type: Number, required: true },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Seller",
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true, ref: "user" },
-    items: [
-      {
-        product: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Product" },
-        quantity: { type: Number, required: true },
-        seller: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Seller" }, // ✅ NEW: Track seller for each item
-      },
-    ],
+    // ✅ this is what your controllers use
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
+
+    // (optional) legacy alias in case something still sends `user`
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: false,
+      select: false,
+    },
+
+    items: { type: [orderItemSchema], required: true },
     amount: { type: Number, required: true },
-    address: { type: String, required: true, ref: "address" },
+
+    // if you store an Address document _id, make this ObjectId; if you store a plain string, String is fine
+    address: { type: mongoose.Schema.Types.ObjectId, ref: "address", required: true },
+
     status: {
       type: String,
-      enum: ["Order Placed", "Shipped", "Delivered", "Cancelled"],
+      enum: ["Order Placed", "Confirmed", "Shipped", "Delivered", "Cancelled"],
       default: "Order Placed",
     },
-    paymentType: { type: String, required: true },
-    isPaid: { type: Boolean, required: true, default: false },
+
+    paymentType: { type: String, enum: ["COD", "Online"], required: true },
+    isPaid: { type: Boolean, default: false, required: true },
     paidAt: { type: Date },
     paymentMethod: { type: String },
     paymentInfo: { type: Object },
@@ -26,6 +55,13 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Order = mongoose.models.order || mongoose.model("order", orderSchema);
+// If someone still saves `user`, copy it into userId automatically
+orderSchema.pre("validate", function (next) {
+  if (!this.userId && this.user) this.userId = this.user;
+  next();
+});
+
+const Order =
+  mongoose.models.order || mongoose.model("order", orderSchema);
 
 export default Order;

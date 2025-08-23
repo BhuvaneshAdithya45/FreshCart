@@ -1,27 +1,31 @@
-import express from 'express';
-import { upload } from '../configs/multer.js';
-import authSeller from '../middlewares/authSeller.js';
+// server/routes/productRoute.js
+import express from "express";
+import { upload } from "../configs/multer.js";
+import authSeller from "../middlewares/authSeller.js";
 import {
   addProduct,
-  changeStock,
+  changeStock,            // toggle inStock true/false
+  updateProductStock,     // NEW: set absolute stock number
   productById,
   productList,
-  sellerProducts
-} from '../controllers/productController.js';
+  sellerProducts,
+} from "../controllers/productController.js";
 
 const productRouter = express.Router();
 
-// ===============================
-// Seller Routes
-// ===============================
-productRouter.post('/add', authSeller, upload.array("images"), addProduct); // Seller adds product
-productRouter.post('/stock', authSeller, changeStock); // Seller updates stock
-productRouter.get('/seller/list', authSeller, sellerProducts); // ✅ New: Get seller's own products
+/* ===============================
+   Seller (private)
+================================ */
+productRouter.post("/add", authSeller, upload.array("images"), addProduct);
+productRouter.post("/stock", authSeller, changeStock);                 // toggle inStock
+productRouter.patch("/stock/update", authSeller, updateProductStock);  // NEW: set stock number
+productRouter.get("/seller/list", authSeller, sellerProducts);
 
-// ===============================
-// Public Routes
-// ===============================
-productRouter.get('/list', productList); // Get all products (public)
-productRouter.get('/id', productById);  // Get single product details (public)
+/* ===============================
+   Public
+================================ */
+productRouter.get("/list", productList);
+// Use a path param for clarity; body is not used on GET
+productRouter.get("/id/:id", productById);
 
 export default productRouter;

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -7,11 +7,18 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
+if (!axios.defaults.baseURL) {
+  // helps during local dev misconfig
+  // eslint-disable-next-line no-console
+  console.warn("VITE_BACKEND_URL is not set");
+}
+
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {
   const currency = import.meta.env.VITE_CURRENCY || "₹";
   const navigate = useNavigate();
+  const { pathname } = useLocation(); // to decide if we need seller auth
 
   const [user, setUser] = useState(null);
   const [isSeller, setIsSeller] = useState(false);
@@ -21,7 +28,7 @@ export const AppContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [sellerProducts, setSellerProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
-  const [searchQuery, setSearchQuery] = useState({});
+  const [searchQuery, setSearchQuery] = useState(""); // string is more natural
 
   // --- Auth checks ---
   const fetchSeller = async () => {
@@ -35,6 +42,7 @@ export const AppContextProvider = ({ children }) => {
         setSellerName("");
       }
     } catch (err) {
+      // 401 is normal if not a seller
       if (err?.response?.status !== 401) {
         console.error("Seller auth check failed:", err.message);
       }
@@ -64,11 +72,8 @@ export const AppContextProvider = ({ children }) => {
   const fetchProducts = async () => {
     try {
       const { data } = await axios.get("/api/product/list");
-      if (data?.success) {
-        setProducts(data.products || []);
-      } else {
-        toast.error(data?.message || "Failed to fetch products");
-      }
+      if (data?.success) setProducts(data.products || []);
+      else toast.error(data?.message || "Failed to fetch products");
     } catch (err) {
       toast.error(err.message || "Failed to fetch products");
     }
@@ -77,11 +82,8 @@ export const AppContextProvider = ({ children }) => {
   const fetchSellerProducts = async () => {
     try {
       const { data } = await axios.get("/api/product/seller/list");
-      if (data?.success) {
-        setSellerProducts(data.products || []);
-      } else {
-        toast.error(data?.message || "Failed to fetch seller products");
-      }
+      if (data?.success) setSellerProducts(data.products || []);
+      else toast.error(data?.message || "Failed to fetch seller products");
     } catch (err) {
       toast.error(err.message || "Failed to fetch seller products");
     }
@@ -129,9 +131,17 @@ export const AppContextProvider = ({ children }) => {
   // initial loads
   useEffect(() => {
     fetchUser();
-    fetchSeller();
     fetchProducts();
-  }, []);
+
+    // only check seller auth on seller pages
+    if (pathname.startsWith("/seller")) {
+      fetchSeller();
+    } else {
+      setIsSeller(false);
+      setSellerName("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // persist cart to backend when user is logged in
   useEffect(() => {
@@ -140,10 +150,14 @@ export const AppContextProvider = ({ children }) => {
         const { data } = await axios.post("/api/cart/update", { cartItems });
         if (!data?.success) toast.error(data?.message || "Cart sync failed");
       } catch (err) {
-        toast.error(err.message || "Cart sync failed");
+        // if session expired, avoid noisy toast
+        if (err?.response?.status !== 401) {
+          toast.error(err.message || "Cart sync failed");
+        }
       }
     };
     if (user) updateCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartItems, user?._id]);
 
   const value = {
