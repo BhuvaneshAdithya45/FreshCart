@@ -76,13 +76,35 @@ FreshCart/
 │   └── package.json
 │
 └── server/                           # Express + Mongo backend
-├── server.js                     # main express + socket.io + stripe webhook
-├── configs/                      # db.js, cloudinary.js
-├── controllers/                  # user, seller, product, order, cart, address
-├── middlewares/                  # authUser, authSeller
-├── models/                       # User, Seller, Product, Order, Address
-├── routes/                       # REST API routes
-└── package.json
+    ├── server.js                     # main express + socket.io + stripe webhook
+    ├── configs/                      # configuration files
+    │   ├── db.js                     # MongoDB connection
+    │   └── cloudinary.js             # Cloudinary setup for image upload
+    ├── controllers/                  # route handlers / business logic
+    │   ├── userController.js
+    │   ├── sellerController.js
+    │   ├── productController.js
+    │   ├── orderController.js
+    │   ├── cartController.js
+    │   └── addressController.js
+    ├── middlewares/                  # custom middlewares
+    │   ├── authUser.js               # protect customer routes
+    │   └── authSeller.js             # protect seller routes
+    ├── models/                       # Mongoose schemas
+    │   ├── User.js
+    │   ├── Seller.js
+    │   ├── Product.js
+    │   ├── Order.js
+    │   └── Address.js
+    ├── routes/                       # API endpoints
+    │   ├── userRoute.js
+    │   ├── sellerRoute.js
+    │   ├── productRoute.js
+    │   ├── orderRoute.js
+    │   ├── cartRoute.js
+    │   └── addressRoute.js
+    └── package.json
+
 
 ````
 
