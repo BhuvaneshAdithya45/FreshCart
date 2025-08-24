@@ -1,24 +1,26 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import toast from "react-hot-toast";
 
 const MyOrders = () => {
   const { currency, axios, user, setCartItems } = useAppContext();
   const location = useLocation();
-  const paymentStatus = useMemo(
-    () => new URLSearchParams(location.search).get("payment"),
-    [location.search]
-  );
+
+  const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const paymentStatus = params.get("payment");
+  const sessionId = params.get("session_id");
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirmRanRef = useRef(false); // prevent double-run in StrictMode
 
   const fetchMyOrders = async () => {
     try {
       setLoading(true);
       const { data } = await axios.get("/api/order/user");
-      if (data?.success) {
-        setOrders(Array.isArray(data.orders) ? data.orders : []);
+      if (data?.success && Array.isArray(data.orders)) {
+        setOrders(data.orders);
       } else {
         setOrders([]);
       }
@@ -32,17 +34,38 @@ const MyOrders = () => {
 
   useEffect(() => {
     fetchMyOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?._id]);
 
+  // Stripe fallback confirm: runs once if we have payment=success & session_id
   useEffect(() => {
-    if (paymentStatus === "success") {
-      fetchMyOrders();
-      try {
-        setCartItems && setCartItems({});
-        localStorage.removeItem("cart");
-      } catch {}
-    }
-  }, [paymentStatus]);
+    const maybeConfirm = async () => {
+      if (confirmRanRef.current) return;
+      if (paymentStatus === "success" && sessionId) {
+        confirmRanRef.current = true;
+        try {
+          const { data } = await axios.get("/api/order/stripe/confirm", {
+            params: { session_id: sessionId },
+          });
+          if (data?.success) {
+            // clear client cart (server already clears in webhook/confirm)
+            setCartItems?.({});
+            try { localStorage.removeItem("cart"); } catch {}
+            toast.success("Payment confirmed!");
+          }
+        } catch (err) {
+          // If webhook already processed it, this may just be a no-op
+          console.warn("Stripe confirm failed/duplicate:", err?.message || err);
+        } finally {
+          // Refresh orders and strip query params so it doesn't re-run
+          fetchMyOrders();
+          window.history.replaceState({}, "", "/my-orders");
+        }
+      }
+    };
+    maybeConfirm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentStatus, sessionId, axios, setCartItems]);
 
   return (
     <div className="mt-16 pb-16">
