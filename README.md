@@ -117,39 +117,38 @@ FreshCart/
 
 ## ⚙️ Running Locally
 
-1. **Clone Repo**
-   ```bash
+1. Clone Repo
+   
    git clone https://github.com/BhuvaneshAdithya45/freshcart.git
    cd freshcart
-````
 
-2. **Client**
 
-   ```bash
+2. Client
+
+   
    cd client
    npm install
    npm run dev   # http://localhost:5173
-   ```
+   
 
-3. **Server**
+3. Server
 
-   ```bash
+   
    cd ../server
    npm install
    npm start     # http://localhost:5000
-   ```
+   
 
-4. **Stripe (local dev only)**
+4. Stripe (local dev only)
 
-   ```bash
+   
    stripe listen --forward-to localhost:5000/api/order/stripe/webhook
-   ```
+   
 
----
+
 
 ## 📦 Deliverables
 
-* **GitHub Repository** → [FreshCart Repo](https://github.com/BhuvaneshAdithya45/FreshCart.git
+GitHub Repository** → [FreshCart Repo](https://github.com/BhuvaneshAdithya45/FreshCart.git
 
-Do you also want me to add a **preview image section** (like `![Preview](./client/src/assets/preview.png)`) at the top so your GitHub shows a screenshot of FreshCart?
-```
+
