@@ -1,173 +1,175 @@
-# 🛒 FreshCart — Multi-Seller Grocery Store
+🛒 FreshCart — Multi-Seller Grocery Store
 
-FreshCart is a **multi-seller grocery e-commerce platform** built with the **MERN stack**.  
-It supports **real-time stock updates**, **multi-seller management**, **COD & Stripe online payments**, and is production-ready with **Render (backend)** and **Vercel (frontend)** deployments.  
+FreshCart is a multi-seller grocery e-commerce platform built with the MERN stack.
+It supports real-time stock updates, multi-seller management, Cash on Delivery (COD) & Stripe online payments, and is deployed on Render (backend) + Vercel (frontend).
 
----
+🎯 Objective & Motivation
 
-## 🎯 Objective & Motivation
+Build a modern grocery marketplace where multiple sellers can register and sell products.
 
-The project was designed to:
-- Provide a **modern grocery marketplace** where multiple sellers can register and sell products.
-- Offer a **smooth shopping experience** for customers with cart, address management, and secure checkout.
-- Implement **real-time inventory updates** so all users see the latest stock instantly.
-- Integrate **Stripe Checkout** for a professional online payment flow.
-- Showcase **end-to-end MERN development** (React + Node.js + MongoDB) with production deployment.
+Provide seamless shopping experience for customers: cart, checkout, and order tracking.
 
----
+Implement real-time inventory updates across users and sellers with Socket.IO.
 
-## ✨ Features
+Integrate Stripe Checkout for secure online payments.
 
-### 🧑 Customers
-- Browse & search products by category.
-- Add to cart, update quantities, remove items.
-- Manage multiple addresses.
-- Checkout with:
-  - 💵 Cash on Delivery (COD)
-  - 💳 Stripe Checkout (online)
-- View order history with payment + status tracking.
+Deploy a production-ready MERN stack app with cloud hosting
 
-### 🛍️ Sellers
-- Register & login with seller accounts.
-- Add products with Cloudinary image upload.
-- Manage product stock (increase/decrease + in-stock toggle).
-- See only their own orders (COD + paid).
-- Update order status → **Confirmed → Shipped → Delivered** or Cancelled.
-- Real-time notifications when stock changes.
+✨ Features
+👤 Customers
 
-### 🌐 Platform
-- Multi-seller marketplace (each product belongs to a seller).
-- Socket.IO for **real-time inventory sync** across customers & sellers.
-- Secure **Stripe payments** with webhook confirmation + fallback.
-- Deployed with **Render (backend API)** and **Vercel (frontend SPA)**.
-- Scalable architecture with JWT authentication for **users & sellers**.
+Browse/search products by category.
 
-## 🏗️ Project Structure
+Add to cart, update quantities, remove items.
+
+Manage multiple delivery addresses.
+
+Checkout with:
+
+💵 Cash on Delivery (COD)
+
+💳 Stripe Checkout (online)
+
+Track orders: payment info, status (Placed → Confirmed → Shipped → Delivered/Cancelled).
+
+🛍️ Sellers
+
+Register/login as seller (via seller registration flow).
+
+Add products with images (uploaded to Cloudinary).
+
+Manage stock (increase/decrease quantities, toggle availability).
+
+View only their own orders (COD + paid).
+
+Update order statuses.
+
+Real-time stock update events when customers order/cancel.
+
+🌐 Platform
+
+Multi-seller marketplace (each product belongs to a seller).
+
+Socket.IO → instant inventory sync across clients.
+
+Stripe Webhooks → confirm/reject online payments reliably.
+
+JWT authentication → secure user & seller sessions.
+
+Cloud Deployments →
+ Render (Backend API)
+ Vercel (Frontend)
+
+🏗️ Project Structure
+
+
 FreshCart/
 ├── client/                           # React + Vite frontend
-│   ├── public/                       # static assets (favicons, images, etc.)
+│   ├── public/                       # static assets
 │   ├── src/
-│   │   ├── assets/                   # project assets (icons, images)
+│   │   ├── assets/                   # icons, images
 │   │   ├── context/
-│   │   │   └── AppContext.jsx        # global state (auth, cart, axios, socket)
+│   │   │   └── AppContext.jsx        # global state, axios, socket
 │   │   ├── utils/
-│   │   │   └── socket.js             # socket.io-client (real-time stock sync)
-│   │   ├── components/               # reusable UI components (Navbar, Footer, etc.)
+│   │   │   └── socket.js             # socket.io-client setup
+│   │   ├── components/               # Navbar, Footer, etc.
 │   │   ├── pages/
-│   │   │   ├── Home.jsx              # landing page
+│   │   │   ├── Home.jsx              # homepage
 │   │   │   ├── Products.jsx          # product listing
 │   │   │   ├── Cart.jsx              # shopping cart + checkout
 │   │   │   ├── MyOrders.jsx          # customer order history
-│   │   │   ├── Login.jsx / Register.jsx  # user auth
 │   │   │   ├── AddAddress.jsx        # address form
-│   │   │   └── seller/               # seller-specific pages
-│   │   │       ├── SellerLogin.jsx   # seller auth
-│   │   │       ├── SellerDashboard.jsx # analytics dashboard
-│   │   │       ├── ProductList.jsx   # seller product management
-│   │   │       └── Orders.jsx        # seller order management
-│   │   └── main.jsx                  # React entry (with Router + Context provider)
+│   │   │   ├── Login.jsx / Register.jsx
+│   │   │   └── seller/               # seller-specific
+│   │   │       ├── SellerLogin.jsx
+│   │   │       ├── SellerDashboard.jsx
+│   │   │       ├── ProductList.jsx
+│   │   │       └── Orders.jsx
+│   │   └── main.jsx                  # app entrypoint
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
 │
-└── server/                           # Express + MongoDB backend
-    ├── server.js                     # main entry: express, CORS, socket.io, webhook
-    ├── configs/
-    │   ├── db.js                     # MongoDB connection
-    │   └── cloudinary.js             # Cloudinary setup
-    ├── controllers/
-    │   ├── userController.js         # user auth + profile
-    │   ├── sellerController.js       # seller auth + profile
-    │   ├── productController.js      # add/list/toggle products
-    │   ├── orderController.js        # COD, Stripe, webhooks, order status
-    │   ├── cartController.js         # cart sync
-    │   └── addressController.js      # address CRUD
-    ├── middlewares/
-    │   ├── authUser.js               # JWT auth for users
-    │   └── authSeller.js             # JWT auth for sellers
-    ├── models/
-    │   ├── User.js                   # user schema
-    │   ├── Seller.js                 # seller schema
-    │   ├── Product.js                # product schema (with stock + seller ref)
-    │   ├── Order.js                  # order schema (with items + seller refs)
-    │   └── Address.js                # address schema
-    ├── routes/
-    │   ├── userRoute.js              # /api/user
-    │   ├── sellerRoute.js            # /api/seller
-    │   ├── productRoute.js           # /api/product
-    │   ├── cartRoute.js              # /api/cart
-    │   ├── addressRoute.js           # /api/address
-    │   └── orderRoute.js             # /api/order
-    ├── package.json
-    └── .env.example                  # sample env vars (JWT, Mongo, Cloudinary, Stripe)
+└── server/                           # Express + Mongo backend
+    ├── server.js                     # main express + socket.io + stripe webhook
+    ├── configs/                      # db.js, cloudinary.js
+    ├── controllers/                  # user, seller, product, order, cart, address
+    ├── middlewares/                  # authUser, authSeller
+    ├── models/                       # User, Seller, Product, Order, Address
+    ├── routes/                       # REST API routes
+    └── package.json
 
 
+🧩 Architecture
 
+Frontend (Vercel)
 
----
+React + Vite SPA
 
-## 🧩 Architecture
+Axios for API calls (VITE_BACKEND_URL)
 
-**Frontend (Vercel)**  
-- React + Vite SPA  
-- Axios for API calls (`VITE_BACKEND_URL`)  
-- Global context (`AppContext`)  
-- Socket.IO client for real-time stock  
+Global context (AppContext)
 
-**Backend (Render)**  
-- Express REST API + Socket.IO  
-- MongoDB (Mongoose models)  
-- Cloudinary (image uploads)  
-- Stripe SDK (checkout sessions + webhook verification)  
-- Webhook fallback route for reliability  
+Socket.IO client for real-time stock
 
-**System Flow**
-```mermaid
-flowchart TD
-A[Customer] -->|Browse products| B[Frontend (React)]
-B -->|API call| C[Backend API (Express)]
-C -->|DB Ops| D[(MongoDB)]
-C -->|Upload| E[Cloudinary]
-C -->|Payment| F[Stripe]
-F -->|Webhook| C
-C -->|Emit Events| G[Socket.IO Server]
-G -->|Stock Updates| B
+Backend (Render)
+
+Express REST API + Socket.IO
+
+MongoDB (Mongoose models)
+
+Cloudinary (image uploads)
+
+Stripe SDK (checkout sessions + webhook verification)
+
+Webhook fallback route for reliability
+
+🔄 System Flow
 
 🛠️ Tech Stack
 
-Frontend: React (Vite), TailwindCSS, React Router, react-hot-toast
+Frontend → React (Vite), TailwindCSS, React Router, react-hot-toast
 
-Backend: Node.js, Express.js, Socket.IO, JWT + Cookies
+Backend → Node.js, Express.js, Socket.IO, JWT + Cookies
 
-Database: MongoDB (Mongoose ORM)
+Database → MongoDB (Mongoose ORM)
 
-Payments: Stripe Checkout + Webhooks
+Payments → Stripe Checkout + Webhooks
 
-Storage: Cloudinary (product images)
+Storage → Cloudinary (product images)
 
-Deployment:
+Deployment →
 
 Render → Backend API
 
 Vercel → Frontend SPA
 
-Running Locally
-1. Clone & Install
-git clone https://github.com/username/freshcart.git
-cd freshcart
+🚀 Running Locally
 
-# client
+1. Clone & Install
+
+  git clone https://github.com/username/FreshCart.git
+  cd FreshCart
+
+Client
+
 cd client
 npm install
-npm run dev  # -> http://localhost:5173
+npm run dev    # -> http://localhost:5173
 
-# server
+Server
+
 cd ../server
 npm install
-npm start     # -> http://localhost:5000
+npm start      # -> http://localhost:5000
 
-2. Stripe CLI (for webhooks in local dev)
+Stripe CLI (for local webhooks)
+
 stripe listen --forward-to localhost:5000/api/order/stripe/webhook
 
+
+
+
+ 
 
 
