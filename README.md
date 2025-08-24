@@ -120,26 +120,31 @@ FreshCart/
 1. Clone Repo
    
    git clone https://github.com/BhuvaneshAdithya45/freshcart.git
+   
    cd freshcart
 
 
-2. Client
+3. Client
 
    
    cd client
+   
    npm install
+   
    npm run dev   # http://localhost:5173
    
 
-3. Server
+4. Server
 
    
    cd ../server
+   
    npm install
+   
    npm start     # http://localhost:5000
    
 
-4. Stripe (local dev only)
+5. Stripe (local dev only)
 
    
    stripe listen --forward-to localhost:5000/api/order/stripe/webhook
@@ -149,6 +154,6 @@ FreshCart/
 
 ## 📦 Deliverables
 
-GitHub Repository** → [FreshCart Repo](https://github.com/BhuvaneshAdithya45/FreshCart.git
+GitHub Repository → [FreshCart Repo](https://github.com/BhuvaneshAdithya45/FreshCart.git
 
 
