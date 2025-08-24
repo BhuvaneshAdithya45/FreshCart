@@ -176,6 +176,6 @@ FreshCart/
 
 ## 📦 Deliverables
 
-GitHub Repository → [FreshCart Repo](https://github.com/BhuvaneshAdithya45/FreshCart.git
+GitHub Repository → [FreshCart Repo](https://github.com/BhuvaneshAdithya45/FreshCart.git)
 
 
