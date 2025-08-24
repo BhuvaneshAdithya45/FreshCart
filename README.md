@@ -1,11 +1,12 @@
 🛒 FreshCart — Multi-Seller Grocery Store
 
-FreshCart is a multi-seller grocery e-commerce platform built with the MERN stack.
-It supports real-time stock updates, multi-seller management, Cash on Delivery (COD) & Stripe online payments, and is deployed on Render (backend) + Vercel (frontend).
+FreshCart is a multi-seller grocery e-commerce platform built on the MERN stack (MongoDB, Express.js, React, Node.js).
+It provides real-time inventory updates, multi-seller management, and secure checkout via Cash on Delivery (COD) and Stripe online payments.
+The app is deployed on Render (backend) and Vercel (frontend).
 
 🎯 Objective & Motivation
 
-Build a modern grocery marketplace where multiple sellers can register and sell products.
+Build a modern grocery marketplace where multiple sellers can sell their products.
 
 Provide seamless shopping experience for customers: cart, checkout, and order tracking.
 
@@ -13,7 +14,7 @@ Implement real-time inventory updates across users and sellers with Socket.IO.
 
 Integrate Stripe Checkout for secure online payments.
 
-Deploy a production-ready MERN stack app with cloud hosting
+Deploy a full-stack MERN app in production (cloud-hosted).
 
 ✨ Features
 👤 Customers
@@ -34,13 +35,13 @@ Track orders: payment info, status (Placed → Confirmed → Shipped → Deliver
 
 🛍️ Sellers
 
-Register/login as seller (via seller registration flow).
+Register/login as seller (with Admin key).
 
 Add products with images (uploaded to Cloudinary).
 
 Manage stock (increase/decrease quantities, toggle availability).
 
-View only their own orders (COD + paid).
+View only their own orders (paid + COD).
 
 Update order statuses.
 
@@ -57,11 +58,12 @@ Stripe Webhooks → confirm/reject online payments reliably.
 JWT authentication → secure user & seller sessions.
 
 Cloud Deployments →
- Render (Backend API)
- Vercel (Frontend)
+
+Render (Backend API)
+
+Vercel (Frontend)
 
 🏗️ Project Structure
-
 
 FreshCart/
 ├── client/                           # React + Vite frontend
@@ -86,8 +88,6 @@ FreshCart/
 │   │   │       ├── ProductList.jsx
 │   │   │       └── Orders.jsx
 │   │   └── main.jsx                  # app entrypoint
-│   ├── index.html
-│   ├── vite.config.js
 │   └── package.json
 │
 └── server/                           # Express + Mongo backend
@@ -106,11 +106,11 @@ Frontend (Vercel)
 
 React + Vite SPA
 
-Axios for API calls (VITE_BACKEND_URL)
+Axios (API calls → VITE_BACKEND_URL)
 
 Global context (AppContext)
 
-Socket.IO client for real-time stock
+Socket.IO client
 
 Backend (Render)
 
@@ -118,58 +118,50 @@ Express REST API + Socket.IO
 
 MongoDB (Mongoose models)
 
-Cloudinary (image uploads)
+Cloudinary (image upload)
 
-Stripe SDK (checkout sessions + webhook verification)
+Stripe (Checkout + Webhook confirmation)
 
-Webhook fallback route for reliability
-
-🔄 System Flow
 
 🛠️ Tech Stack
 
-Frontend → React (Vite), TailwindCSS, React Router, react-hot-toast
+Frontend: React (Vite), TailwindCSS, React Router, react-hot-toast
+Backend: Node.js, Express.js, Socket.IO, JWT + Cookies
+Database: MongoDB (Mongoose ORM)
+Payments: Stripe Checkout + Webhooks
+Storage: Cloudinary (images)
+Deployment: Render (API), Vercel (Client)
 
-Backend → Node.js, Express.js, Socket.IO, JWT + Cookies
+⚙️ Running Locally
 
-Database → MongoDB (Mongoose ORM)
+1. Clone Repo
 
-Payments → Stripe Checkout + Webhooks
+   git clone https://github.com/BhuvaneshAdithya45/freshcart.git
+   cd freshcart
 
-Storage → Cloudinary (product images)
+2. Client
 
-Deployment →
+   cd client
+   
+   npm install
+   
+   npm run dev   # http://localhost:5173
 
-Render → Backend API
+3. Server
 
-Vercel → Frontend SPA
-
-🚀 Running Locally
-
-1. Clone & Install
-
-  git clone https://github.com/username/FreshCart.git
-  cd FreshCart
-
-Client
-
-cd client
-npm install
-npm run dev    # -> http://localhost:5173
-
-Server
-
-cd ../server
-npm install
-npm start      # -> http://localhost:5000
-
-Stripe CLI (for local webhooks)
-
-stripe listen --forward-to localhost:5000/api/order/stripe/webhook
-
-
-
-
+  cd ../server
+  
+  npm install
  
+  npm start     # http://localhost:5000
 
+4. Stripe (local dev only)
+
+   stripe listen --forward-to localhost:5000/api/order/stripe/webhook
+
+📦 Deliverables
+
+GitHub Repository: https://github.com/BhuvaneshAdithya45/FreshCart.git
+
+   
 
