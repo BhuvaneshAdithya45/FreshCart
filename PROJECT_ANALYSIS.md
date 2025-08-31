@@ -12,7 +12,7 @@
 - **Database**: MongoDB with Mongoose ODM
 - **Deployment**: Vercel (Frontend) + Render (Backend)
 
-### **Key Architectural Patterns**
+## **Key Architectural Patterns**
 1. **MVC Pattern**: Clear separation of Models, Controllers, and Routes
 2. **Context API**: Centralized state management for React
 3. **Middleware Pattern**: Authentication and request processing
