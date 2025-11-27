@@ -5,7 +5,7 @@
 # - ECR_REPOSITORY: your ECR repository name
 # - AWS_REGION: your AWS region (e.g. us-east-1)
 # - ECS_SERVICE: your ECS service name
-# - ECS_CLUSTER: your ECS cluster name
+# - ECS_CLUSTER: your ECS cluster nam
 # - ECS_TASK_DEFINITION: path to your task definition JSON file in the repo
 # - CONTAINER_NAME: container name inside task definition's containerDefinitions
 #
