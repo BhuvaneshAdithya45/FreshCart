@@ -1,6 +1,6 @@
-# 🛒GreenCart — Multi-Seller Grocery Store
+# 🛒FreshCart — Multi-Seller Grocery Store
 
-GreenCart is a multi-seller grocery e-commerce platform built on the **MERN stack** (MongoDB, Express.js, React, Node.js).  
+FreshCart is a multi-seller grocery e-commerce platform built on the **MERN stack** (MongoDB, Express.js, React, Node.js).  
 It provides real-time inventory updates, multi-seller management, and secure checkout via **Cash on Delivery (COD)** and **Stripe online payments**.  
 The app is deployed on **Render (backend)** and **Vercel (frontend)**.
 
