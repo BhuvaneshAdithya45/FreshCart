@@ -1,4 +1,4 @@
-# 🛒FreshCart — Multi-Seller Grocery Store
+# FreshCart — Multi-Seller Grocery Store
 
 FreshCart is a multi-seller grocery e-commerce platform built on the **MERN stack** (MongoDB, Express.js, React, Node.js).  
 It provides real-time inventory updates, multi-seller management, and secure checkout via **Cash on Delivery (COD)** and **Stripe online payments**.  
